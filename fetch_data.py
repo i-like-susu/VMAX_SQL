@@ -4,7 +4,6 @@ import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 利用正则表达式进行日期的匹配，只需要将随便写个日期就可以，只要是连续的8个数字就行
 SQL = '''
 select date,appname,dest_ip,sum(time) times,
 round(sum(total_ul_rtt)/sum(total_ul_delay_cnt),0) as ul_avg_rtt,
@@ -46,7 +45,7 @@ sum(case when l4protocol_id = 0  and ack_status = 0 then 1 else 0 end) TCP23_suc
 from db_fact_psup_https_20211001 where l4protocol_id=0  and source_ip in (select ip from dim_enodebip_inner where city_id=910)
 and dest_ip like '10.%'
 group by date,id,dest_ip
-)a  left join dim_service_new_ b on a.id=b.id
+)a  left join dim_service_new_20210616 b on a.id=b.id
 group by date,appname,dest_ip
 '''
 
