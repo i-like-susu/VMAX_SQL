@@ -1,0 +1,17 @@
+select date,hour,appname,
+round(initial_buffer_duration/initial_buffer_times,0) as 'video initial buffer duration(ms)',
+round(buffer_times*60000/download_duration,2) as 'video_buffer frequency/min',
+round(video_download_traffic_500KB*8000/video_download_usage_duration_500KB/1024,0) as 'DL>500KB video download goodput(Kbps)',
+round(video_download_traffic_500KB*8000/video_download_duration_500KB/1024,0) as
+'DL>500KB video download throughput(Kbps)' from (
+select date(start_time) date,hour(start_time) hour,service_id||','||subservice_id id,
+sum(case when play_success = 1 and buffer_duration < 30000 then buffer_duration else 0 end) as initial_buffer_duration,
+sum(case when play_success = 1 and buffer_duration < 30000 then 1 else 0 end) as initial_buffer_times,
+sum(case when play_success = 1 and download_octet > 512000 and pause_duration < 50000 then pause_cnt else 0 end) as buffer_times,
+sum(case when play_success = 1 and download_octet > 512000 and pause_duration < 50000 then download_duration else 0 end) as download_duration,
+sum(case when play_success = 1 and download_octet > 500 * 1024 then download_octet else 0 end) as video_download_traffic_500KB,
+sum(case when play_success = 1 and download_octet > 500 * 1024 then usage_duration else 0 end) as video_download_usage_duration_500KB,
+sum(case when play_success = 1 and download_octet > 500 * 1024 then download_duration else 0 end) as video_download_duration_500KB
+from db_fact_psup_video_20211111 where dest_ip in ('10.113.33.229','10.113.33.33','10.113.33.193','10.113.33.225','10.113.33.65')
+and download_octet > 500 * 1024 and source_ip in (select ip from dim_enodebip_inner where city_id=910)
+group by date,hour,id)a left join dim_service_new b on a.id=b.id
