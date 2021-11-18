@@ -1,0 +1,7 @@
+select  date,appname,ul_traffic,dl_traffic,total_traffic,user_num from (
+select date(clttime) date,service_id||','||subservice_id id,sum(lte_ul_payload) as ul_traffic,
+sum(lte_dl_payload) as dl_traffic,
+sum(lte_payload) as total_traffic,sum(lte_user_num) as user_num
+from telkomsel_apptrend_day_20211111
+where city_id=910 and service_id=8 group by date,id)a
+left join dim_service_new b on a.id=b.id
